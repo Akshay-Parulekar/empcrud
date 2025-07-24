@@ -1,14 +1,25 @@
+import 'package:dio/dio.dart';
 import 'package:empcrud/entity/Employee.dart';
+import 'package:empcrud/util/utils.dart';
 import 'package:floor/floor.dart';
+import 'package:flutter/cupertino.dart';
+
+import '../service/api_service.dart';
 
 @dao
 abstract class EmpRepo
 {
-  @Query("select * from Employee")
+  @Query("select * from Employee where deleted = 0")
   Stream<List<Employee>> watchAll();
 
   @Query("select * from Employee where idTemp = :idTemp")
   Future<void> getEmp(int idTemp);
+
+  @Query("select coalesce(max(ts), 0) from Employee")
+  Future<int?> getMaxTs();
+
+  @Query("select * from Employee where ts is null")
+  Future<List<Employee?>> getUnsynced();
 
   @Insert(onConflict: OnConflictStrategy.replace)
   Future<void> save(Employee emp);
@@ -18,4 +29,52 @@ abstract class EmpRepo
     emp.deleted = 1;
     save(emp);
   }
+
+  Future<void> downloadData(int? maxTs) async
+  {
+    maxTs ??= await getMaxTs();
+    final response = await dio?.post(Endpoints.emp, data: {'ts': maxTs});
+
+    List<Employee> listEmpDownloaded = (response?.data as List).map((jsonObj) => Employee.fromJson(jsonObj)).toList();
+    for(Employee emp in listEmpDownloaded)
+    {
+      save(emp);
+    }
+  }
+
+  Future<void> uploadData() async
+  {
+    List<Employee?> listEmpUnsynced = await getUnsynced();
+    for(Employee? emp in listEmpUnsynced)
+    {
+      if(emp != null)
+      {
+        Map<String, dynamic> payload = emp.toJson();
+        payload['idClient'] = idClient;
+
+        print('payload = ${payload.toString()}');
+
+        final response = await dio?.post("${Endpoints.emp}/save/", data: payload);
+        Employee empServer = Employee.fromJson(response?.data);
+        emp.id = empServer.id;
+        emp.ts = empServer.ts;
+        await save(emp);
+      }
+    }
+  }
+
+  // Configure Dio
+  Dio? dio;
+
+  void configDio(BuildContext context)
+  {
+    this.dio = Dio(BaseOptions(
+        baseUrl: myBaseUrl,
+        connectTimeout: Duration(seconds: 30),
+        receiveTimeout: Duration(seconds: 30)
+    ));
+
+    dio?.interceptors.add(getInterceptor(context));
+  }
+
 }

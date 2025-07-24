@@ -4,13 +4,14 @@ import 'package:empcrud/repo/EmpRepo.dart';
 import 'package:empcrud/util/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 import '../db/AppDatabase.dart';
+import '../service/api_service.dart';
 
-class HomePage extends StatefulWidget {
-
+class HomePage extends StatefulWidget
+{
   AppDatabase db;
-
 
   HomePage(this.db);
 
@@ -21,6 +22,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late EmpRepo empRepo;
   late List<Employee> listEmp;
+  late StompClient stompClient;
 
 
   @override
@@ -38,7 +40,11 @@ class _HomePageState extends State<HomePage> {
       }, child: Icon(Icons.add), backgroundColor: Colors.lightBlue, foregroundColor: Colors.white),
       body: RefreshIndicator(
         onRefresh: () async{
-          setState(() {});},
+          setState(() async{
+            int? maxTs = await empRepo.getMaxTs();
+            await empRepo.downloadData(maxTs);
+            await empRepo.uploadData();
+          });},
         child: StreamBuilder(
           stream: empRepo.watchAll(),
           builder: (BuildContext context, AsyncSnapshot<List<Employee>> snapshot) {
@@ -95,6 +101,7 @@ class _HomePageState extends State<HomePage> {
                 child: ListTile(
                   title: Text(emp.name),
                   subtitle: Text(emp.salary.toString()),
+                  leading: Text(emp.deleted.toString()),
                   trailing: Icon(
                     emp.id==null?Icons.access_time:Icons.done,
                     color: emp.id==null?Colors.red:Colors.green,
@@ -112,5 +119,32 @@ class _HomePageState extends State<HomePage> {
         ),
       )
     );
+  }
+
+  void _initWebSocket()
+  {
+    stompClient = StompClient(
+        config: StompConfig.sockJS(
+          url: "${myBaseUrl}/ws/",
+          onWebSocketError: (p0) => print('websocket failed ${p0.toString()}'),
+          onConnect: (frame)
+          {
+            stompClient.subscribe(destination: "/topic/emp/", callback: (frame) async
+            {
+              if(frame.body != idClient)
+              {
+                print("recieved data by websocket");
+                empRepo.downloadData(null);
+              }
+            },);
+          },));
+
+    stompClient.activate();
+  }
+
+  @override
+  void dispose() {
+    stompClient.deactivate();
+    super.dispose();
   }
 }
