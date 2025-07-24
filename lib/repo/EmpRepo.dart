@@ -1,26 +1,21 @@
 import 'package:empcrud/entity/Employee.dart';
+import 'package:floor/floor.dart';
 
-class EmpRepo
+@dao
+abstract class EmpRepo
 {
-  List<Employee> listEmp = [
-    Employee(1, 1, "Kaif", 99999, 1111, 0),
-    Employee(1, null, "Hedley", 99999, null, 0),
-    Employee(1, 1, "Govind", 99999, 1111, 0),
-    Employee(1, null, "Baburav", 99999, null, 0),
-  ];
+  @Query("select * from Employee")
+  Stream<List<Employee>> watchAll();
 
-  List<Employee> findAll()
-  {
-    return listEmp;
-  }
+  @Query("select * from Employee where idTemp = :idTemp")
+  Future<void> getEmp(int idTemp);
 
-  void save(Employee emp)
-  {
-    listEmp.add(emp);
-  }
+  @Insert(onConflict: OnConflictStrategy.replace)
+  Future<void> save(Employee emp);
 
-  void delete(Employee emp)
-  {
-    listEmp.remove(emp);
+  Future<void> delete(Employee emp)
+  async {
+    emp.deleted = 1;
+    save(emp);
   }
 }

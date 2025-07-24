@@ -1,5 +1,9 @@
+import 'package:floor/floor.dart';
+
+@entity
 class Employee
 {
+  @PrimaryKey(autoGenerate: true)
   int? idTemp;
   int? id;
   String name;
