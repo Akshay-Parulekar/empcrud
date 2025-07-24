@@ -90,7 +90,7 @@ class _HomePageState extends State<HomePage> {
                 },
                 onDismissed: (direction) async {
                   await empRepo.delete(emp);
-                  // setState(() {});
+                  setState(() {});
                 },
                 child: ListTile(
                   title: Text(emp.name),

@@ -13,6 +13,7 @@ class EmpForm extends StatelessWidget
   {
     if(emp != null)
     {
+      this.emp = emp;
       tName.text = emp.name;
       tSalary.text = emp.salary.toString();
     }
