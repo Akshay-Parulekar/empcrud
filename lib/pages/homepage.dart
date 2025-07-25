@@ -44,9 +44,7 @@ class _HomePageState extends State<HomePage> {
       }, child: Icon(Icons.add), backgroundColor: Colors.lightBlue, foregroundColor: Colors.white),
       body: RefreshIndicator(
         onRefresh: () async{
-          await empRepo.downloadData();
-          await empRepo.uploadData();
-          setState(() async{});
+          await empRepo.syncData();
           },
         child: StreamBuilder(
           stream: empRepo.watchAll(),

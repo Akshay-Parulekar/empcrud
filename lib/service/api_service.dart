@@ -5,8 +5,8 @@ import 'package:flutter/cupertino.dart';
 
 import '../util/utils.dart';
 
-//String myBaseUrl = "http://10.0.2.2:8080";
- String myBaseUrl = _isRunningOnEmulator()?"http://10.0.2.2:8080":"http://192.168.1.28:8080";
+String myBaseUrl = "http://10.0.2.2:8080";
+// String myBaseUrl = _isRunningOnEmulator()?"http://10.0.2.2:8080":"http://192.168.1.28:8080";
 // String myBaseUrl = "https://ems.asianinfotech.co.in";
 
 class Endpoints

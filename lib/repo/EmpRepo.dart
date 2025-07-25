@@ -94,7 +94,7 @@ abstract class EmpRepo
     dio?.interceptors.add(getInterceptor(context));
   }
 
-  void syncData() async {
+  Future<void> syncData() async {
     await downloadData();
     await uploadData();
   }
