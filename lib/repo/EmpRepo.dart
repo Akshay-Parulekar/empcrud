@@ -29,6 +29,7 @@ abstract class EmpRepo
   Future<void> delete(Employee emp)
   async {
     emp.deleted = 1;
+    emp.ts = null;
     save(emp);
   }
 
