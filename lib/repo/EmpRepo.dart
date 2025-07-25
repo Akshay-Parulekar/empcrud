@@ -9,6 +9,8 @@ import '../service/api_service.dart';
 @dao
 abstract class EmpRepo
 {
+  Dio? dio;
+
   @Query("select * from Employee where deleted = 0")
   Stream<List<Employee>> watchAll();
 
@@ -33,7 +35,12 @@ abstract class EmpRepo
   Future<void> downloadData(int? maxTs) async
   {
     maxTs ??= await getMaxTs();
+    print('maxTs before download() : ${maxTs}');
+    print('endpoint for download : ${Endpoints.emp}');
+
     final response = await dio?.post(Endpoints.emp, data: {'ts': maxTs});
+
+    print('response after download() : ${response.toString()}');
 
     List<Employee> listEmpDownloaded = (response?.data as List).map((jsonObj) => Employee.fromJson(jsonObj)).toList();
     for(Employee emp in listEmpDownloaded)
@@ -51,10 +58,13 @@ abstract class EmpRepo
       {
         Map<String, dynamic> payload = emp.toJson();
         payload['idClient'] = idClient;
+        payload.remove('idTemp');
 
         print('payload = ${payload.toString()}');
 
         final response = await dio?.post("${Endpoints.emp}/save/", data: payload);
+        print('response after upload() : ${response.toString()}');
+
         Employee empServer = Employee.fromJson(response?.data);
         emp.id = empServer.id;
         emp.ts = empServer.ts;
@@ -64,10 +74,9 @@ abstract class EmpRepo
   }
 
   // Configure Dio
-  Dio? dio;
-
   void configDio(BuildContext context)
   {
+    print('myBaseUrl : ${myBaseUrl}');
     this.dio = Dio(BaseOptions(
         baseUrl: myBaseUrl,
         connectTimeout: Duration(seconds: 30),

@@ -28,6 +28,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     empRepo = widget.db.empRepo;
+    empRepo.configDio(context);
+    _initWebSocket();
   }
 
   @override
@@ -36,15 +38,16 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(title: Text("Employees"), backgroundColor: Colors.lightBlue, foregroundColor: Colors.white,),
       floatingActionButton: FloatingActionButton(onPressed: () async {
         Employee empModified = await Navigator.push(context, MaterialPageRoute(builder: (context) => EmpForm(null)));
-        empRepo.save(empModified);
+        await empRepo.save(empModified);
+        await empRepo.uploadData();
       }, child: Icon(Icons.add), backgroundColor: Colors.lightBlue, foregroundColor: Colors.white),
       body: RefreshIndicator(
         onRefresh: () async{
-          setState(() async{
-            int? maxTs = await empRepo.getMaxTs();
-            await empRepo.downloadData(maxTs);
-            await empRepo.uploadData();
-          });},
+          int? maxTs = await empRepo.getMaxTs();
+          await empRepo.downloadData(maxTs);
+          await empRepo.uploadData();
+          setState(() async{});
+          },
         child: StreamBuilder(
           stream: empRepo.watchAll(),
           builder: (BuildContext context, AsyncSnapshot<List<Employee>> snapshot) {
@@ -96,19 +99,21 @@ class _HomePageState extends State<HomePage> {
                 },
                 onDismissed: (direction) async {
                   await empRepo.delete(emp);
+                  await empRepo.uploadData();
                   setState(() {});
                 },
                 child: ListTile(
                   title: Text(emp.name),
                   subtitle: Text(emp.salary.toString()),
-                  leading: Text(emp.deleted.toString()),
+                  leading: Text(emp.id.toString()),
                   trailing: Icon(
                     emp.id==null?Icons.access_time:Icons.done,
                     color: emp.id==null?Colors.red:Colors.green,
                   ),
                   onTap: () async {
                     Employee empModified = await Navigator.push(context, MaterialPageRoute(builder: (context) => EmpForm(emp)));
-                    empRepo.save(empModified);
+                    await empRepo.save(empModified);
+                    await empRepo.uploadData();
                   },
                 ),
               );
