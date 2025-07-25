@@ -7,7 +7,7 @@ class Employee
   int? idTemp;
   int? id;
   String name;
-  int salary;
+  double salary;
   int? ts;
   int deleted;
 

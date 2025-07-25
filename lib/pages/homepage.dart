@@ -29,6 +29,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     empRepo = widget.db.empRepo;
     empRepo.configDio(context);
+    empRepo.syncData();
     _initWebSocket();
   }
 
@@ -43,8 +44,7 @@ class _HomePageState extends State<HomePage> {
       }, child: Icon(Icons.add), backgroundColor: Colors.lightBlue, foregroundColor: Colors.white),
       body: RefreshIndicator(
         onRefresh: () async{
-          int? maxTs = await empRepo.getMaxTs();
-          await empRepo.downloadData(maxTs);
+          await empRepo.downloadData();
           await empRepo.uploadData();
           setState(() async{});
           },
@@ -100,7 +100,6 @@ class _HomePageState extends State<HomePage> {
                 onDismissed: (direction) async {
                   await empRepo.delete(emp);
                   await empRepo.uploadData();
-                  setState(() {});
                 },
                 child: ListTile(
                   title: Text(emp.name),
@@ -139,7 +138,7 @@ class _HomePageState extends State<HomePage> {
               if(frame.body != idClient)
               {
                 print("recieved data by websocket");
-                empRepo.downloadData(null);
+                empRepo.downloadData();
               }
             },);
           },));

@@ -47,7 +47,7 @@ class EmpForm extends StatelessWidget
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(onPressed: () {
-                Employee empModified = Employee(emp?.idTemp, emp?.id, tName.text, int.parse(tSalary.text), null, 0);
+                Employee empModified = Employee(emp?.idTemp, emp?.id, tName.text, double.parse(tSalary.text), null, 0);
                 return Navigator.pop(context, empModified);
               }, child: Text("SAVE"), style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent,

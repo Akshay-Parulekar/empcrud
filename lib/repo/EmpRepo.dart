@@ -14,8 +14,8 @@ abstract class EmpRepo
   @Query("select * from Employee where deleted = 0")
   Stream<List<Employee>> watchAll();
 
-  @Query("select * from Employee where idTemp = :idTemp")
-  Future<void> getEmp(int idTemp);
+  @Query("select * from Employee where id = :id")
+  Future<Employee?> getById(int id);
 
   @Query("select coalesce(max(ts), 0) from Employee")
   Future<int?> getMaxTs();
@@ -32,9 +32,9 @@ abstract class EmpRepo
     save(emp);
   }
 
-  Future<void> downloadData(int? maxTs) async
+  Future<void> downloadData() async
   {
-    maxTs ??= await getMaxTs();
+    int? maxTs = await getMaxTs();
     print('maxTs before download() : ${maxTs}');
     print('endpoint for download : ${Endpoints.emp}');
 
@@ -43,9 +43,16 @@ abstract class EmpRepo
     print('response after download() : ${response.toString()}');
 
     List<Employee> listEmpDownloaded = (response?.data as List).map((jsonObj) => Employee.fromJson(jsonObj)).toList();
-    for(Employee emp in listEmpDownloaded)
+    for(Employee empServer in listEmpDownloaded)
     {
-      save(emp);
+      Employee? empClient = await getById(empServer.id!);
+
+      if(empClient != null)
+      {
+        empServer.idTemp = empClient.idTemp;
+      }
+
+      save(empServer);
     }
   }
 
@@ -63,7 +70,7 @@ abstract class EmpRepo
         print('payload = ${payload.toString()}');
 
         final response = await dio?.post("${Endpoints.emp}/save/", data: payload);
-        print('response after upload() : ${response.toString()}');
+        print('response after upload() : ${response}');
 
         Employee empServer = Employee.fromJson(response?.data);
         emp.id = empServer.id;
@@ -84,6 +91,11 @@ abstract class EmpRepo
     ));
 
     dio?.interceptors.add(getInterceptor(context));
+  }
+
+  void syncData() async {
+    await downloadData();
+    await uploadData();
   }
 
 }
