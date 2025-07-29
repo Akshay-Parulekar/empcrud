@@ -126,8 +126,8 @@ class _HomePageState extends State<HomePage> {
   void _initWebSocket()
   {
     stompClient = StompClient(
-        config: StompConfig.sockJS(
-          url: "${myBaseUrl}/ws/",
+        config: StompConfig(
+          url: "${myBaseUrl.replaceAll('http', 'ws')}/ws",
           onWebSocketError: (p0) => print('websocket failed ${p0.toString()}'),
           onConnect: (frame)
           {
